@@ -1,22 +1,16 @@
 import pandas as pd
-# Import the StandardScaler
 from sklearn.preprocessing import StandardScaler
-# Import our plotting module, and PCA class
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 import numpy as np
-# Import train_test_split function and Decision tree classifier
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
-# Import LogisticRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import KFold, cross_val_score
 
 
-# Read in track metadata with genre labels
 tracks = pd.read_csv('data/fma-rock-vs-hiphop.csv')
 
-# Read in track metrics with the features
 echonest_metrics = pd.read_json('data/echonest-metrics.json', precise_float=True)
 
 # Merge the relevant columns of tracks and echonest_metrics
@@ -25,32 +19,22 @@ echo_tracks = echonest_metrics.merge(tracks[['genre_top', 'track_id']], on='trac
 # Inspect the resultant dataframe
 echo_tracks.info()
 
-# We typically want to avoid using variables that have strong correlations with each other -- hence avoiding feature redundancy -- for a few reasons:
-# To keep the model simple and improve interpretability (with many features, we run the risk of overfitting).
-# When our datasets are very large, using fewer features can drastically speed up our computation time.
-# To get a sense of whether there are any strongly correlated features in our data, we will use built-in functions in the pandas package.
-
 # Create a correlation matrix
 corr_metrics = echonest_metrics.corr()
 corr_metrics.style.background_gradient()
 
-# Define our features
+# Define features and labels
 features = echo_tracks.drop(columns=['genre_top', 'track_id'])
-
-# Define our labels
 labels = echo_tracks['genre_top']
 
 # Scale the features and set the values to a new variable
 scaler = StandardScaler()
 scaled_train_features = scaler.fit_transform(features)
 
-
-# Get our explained variance ratios from PCA using all features
 pca = PCA()
 pca.fit(scaled_train_features)
 exp_variance = pca.explained_variance_ratio_
 
-# plot the explained variance using a barplot
 fig, ax = plt.subplots()
 ax.bar(range(pca.n_components_), exp_variance)
 ax.set_xlabel('Principal Component #')
@@ -71,18 +55,18 @@ pca = PCA(n_components, random_state=10)
 pca.fit(scaled_train_features)
 pca_projection = pca.transform(scaled_train_features)
 
-# Split our data
+# Split data
 train_features, test_features, train_labels, test_labels = train_test_split(
     pca_projection, labels, random_state=10)
 
-# Train our decision tree
+# Train decision tree
 tree = DecisionTreeClassifier(random_state=10)
 tree.fit(train_features, train_labels)
 
 # Predict the labels for the test data
 pred_labels_tree = tree.predict(test_features)
 
-# Train our logisitic regression
+# Train logisitic regression
 logreg = LogisticRegression(random_state=10)
 logreg.fit(train_features, train_labels)
 pred_labels_logit = logreg.predict(test_features)
